@@ -394,7 +394,7 @@ export default function MyChat() {
         const con = await axios.delete('http://13.212.6.208:8800/api/conversations/deleteCon', {
           data: { convId: currentChat._id }
         })
-        // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
+        // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
         // setConversation(res.data);
         Demo()
         setCurrentChat(null)
@@ -449,7 +449,7 @@ export default function MyChat() {
             userId: _id
           };
           const con = axios.put('http://13.212.6.208:8800/api/conversations/removeMember', article)
-          // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
+          // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
           // setConversation(res.data);
           Demo()
           setCurrentChat(null)
@@ -509,7 +509,7 @@ export default function MyChat() {
       try {
         const res = await axios.post("http://13.212.6.208:8800/api/conversations", args);
 
-        //const con = await axios.get("http://localhost:8800/api/conversations/" + _id);
+        //const con = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
         //setConversation(con.data);
         setCurrentChat(res.data);
         setAuthorize(res.data.authorization)
@@ -641,7 +641,7 @@ export default function MyChat() {
         setMyFriend(friend.data);
         // const friendId = res.data.find((m) => m !== _id);
         // console.log(friendId)
-        // const friend = await axios.get("http://localhost:8800/api/users?userId="+friendId);  
+        // const friend = await axios.get("http://13.212.6.208:8800/api/users?userId="+friendId);  
         // console.log(friend);
         // setMyFriend(friend.data);
       } catch (err) {
