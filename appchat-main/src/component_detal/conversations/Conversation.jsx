@@ -31,7 +31,7 @@ export default function Conversation({ conversation, currentUser, timeM, myMes,r
 
   useEffect(() => {
     const getNewMes = async () => {
-      //http://13.212.6.208:8800/api/messages/lastmess/63681efaf338cdd7632c04f1
+      //http://localhost:8800/api/messages/lastmess/63681efaf338cdd7632c04f1
       try {
         const res = await axios("http://13.212.6.208:8800/api/messages/lastmess/"+conversation._id);
         console.log(res.data.sender)

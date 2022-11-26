@@ -15,7 +15,7 @@ export default function Message({ message, own, onClickDelete, userId, onClickDe
   // useEffect(() => {
   //   const getUser = async () => {
   //     try {
-  //       const res = await axios("http://13.212.6.208:8800/api/users/name?userId="+message.sender);  
+  //       const res = await axios("http://localhost:8800/api/users/name?userId="+message.sender);  
   //       setUser(res.data);
   //     } catch (err) {
   //       console.log(err); 

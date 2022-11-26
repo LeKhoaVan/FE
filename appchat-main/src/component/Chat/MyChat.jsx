@@ -170,7 +170,7 @@ export default function MyChat() {
               }
             }
             try {
-              const res = await axios.post("http://13.212.6.208:8800/api/messages", messageimage);
+              const res = await axios.post("http://13.212.6.208:8800//api/messages", messageimage);
               //setMessages([...messages, res.data]);
               socket.current.emit("sendMessage", {
                 _id:res.data._id,
@@ -394,7 +394,7 @@ export default function MyChat() {
         const con = await axios.delete('http://13.212.6.208:8800/api/conversations/deleteCon', {
           data: { convId: currentChat._id }
         })
-        // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+        // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
         // setConversation(res.data);
         Demo()
         setCurrentChat(null)
@@ -449,7 +449,7 @@ export default function MyChat() {
             userId: _id
           };
           const con = axios.put('http://13.212.6.208:8800/api/conversations/removeMember', article)
-          // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+          // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
           // setConversation(res.data);
           Demo()
           setCurrentChat(null)
@@ -509,11 +509,11 @@ export default function MyChat() {
       try {
         const res = await axios.post("http://13.212.6.208:8800/api/conversations", args);
 
-        //const con = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+        //const con = await axios.get("http://localhost:8800/api/conversations/" + _id);
         //setConversation(con.data);
         setCurrentChat(res.data);
         setAuthorize(res.data.authorization)
-        setConActive(0)
+        setConActive(conversations.length)
       } catch (err) {
         console.log(err)
       }
@@ -533,8 +533,10 @@ export default function MyChat() {
   //   (member) => member !== user._id
   // );
   // console.log(receiverId);
+
+
   useEffect(() => {
-    socket.current = io("ws://localhost:8800");
+    socket.current = io("ws://13.212.6.208:8800");
     socket.current.on("getMessage", (data) => {
       setArrivalMessages({
         _id:data._id,
@@ -556,12 +558,8 @@ export default function MyChat() {
           conv.updatedAt = new Date(Date.now()).toISOString();
           for(let index=0; index<conv.members.length; index++){
             if(conv.members[index] === _id){
-              const concsts = conversations.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))
-                setConversation(concsts);
-                concsts.forEach((con,index)=>{
-                  if(con === currentChat)
-                    setConActive(index)
-                })
+              conversations.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))
+                setConversation(conversations);
             }              
           }
         }
@@ -643,7 +641,7 @@ export default function MyChat() {
         setMyFriend(friend.data);
         // const friendId = res.data.find((m) => m !== _id);
         // console.log(friendId)
-        // const friend = await axios.get("http://13.212.6.208:8800/api/users?userId="+friendId);  
+        // const friend = await axios.get("http://localhost:8800/api/users?userId="+friendId);  
         // console.log(friend);
         // setMyFriend(friend.data);
       } catch (err) {
@@ -1041,7 +1039,7 @@ export default function MyChat() {
       const res = await axios.post("http://13.212.6.208:8800/api/conversations/newConvGroup", conv);
       setCurrentChat(res.data);
       setAuthorize(res.data.authorization)
-      setConActive(0)
+      setConActive(conversations.length)
     } catch (err) {
       console.log(err.message);
     }
@@ -1110,7 +1108,7 @@ export default function MyChat() {
               }}>
 
                 <Conversation conversation={c} currentUser={_id} timeM={arrivalMessage} myMes={senderMessage}
-                  recall={recallStatus} active={conActive == index ? true : false} />
+                  recall={recallStatus} active={conActive == index ? true : false} conv ={conversations} />
 
 
               </div>
@@ -1221,9 +1219,7 @@ export default function MyChat() {
                   </span>
                 </Tooltip>
               </div>
-            </> : <div className="noChat">
-            <div className="header-name">Chào mừng bạn đến với CynoChat</div>
-            </div>
+            </> : <span className="noChat">Chưa có tin nhắn</span>
         }
       </div>
       <div className="morInfo_con">
@@ -1420,7 +1416,7 @@ export default function MyChat() {
           </div>
 
           <div className="input-group">
-            <input className="form-control rounded ip-addGr search" type="text" onKeyUp={handleTextSearch} id="search-group" placeholder="Nhập email để tìm kiếm" />
+            <input className="form-control rounded ip-addGr" type="text" onKeyUp={handleTextSearch} id="search-group" placeholder="Tìm kiếm bằng email" />
             <div className="model-search">
               {userSearch ?
                 <div className="item">
@@ -1437,8 +1433,8 @@ export default function MyChat() {
             </div>
           </div>
 
-          <div className="line-form"></div>
-          <p className="title-Add">Đã chọn</p>
+          <div><p>____________________________________________________________________________</p></div>
+          <p className="title-Add">Danh sách cần thêm</p>
           <ul className="listAdd">
             {listUserGroupNew.map((user_gr) => (
               <li className="itemAdd">
@@ -1495,9 +1491,9 @@ export default function MyChat() {
       >
         <form>
           <div className="input-group">
-            <input className="form-control rounded ip-addGr search" type="text" 
+            <input className="form-control rounded ip-addGr" type="text" 
             onKeyUp={handleTextSearch2}
-            id="search-group2" placeholder="Nhập email để tìm kiếm" /> 
+            id="search-group2" placeholder="Tìm kiếm bằng email" /> 
                 
             <div className="model-search">
               {userSearchAddNew?
@@ -1521,8 +1517,9 @@ export default function MyChat() {
 
             </div>
           </div>
-          <div className="line-form"></div>
-          <p className="title-Add">Đã chọn</p>
+
+          <div><p>____________________________________________________________________________</p></div>
+          <p className="title-Add">Danh sách cần thêm</p>
           <ul className="listAdd">
             {listUserGroupAdd.map((user_gr) => (
               <li className="itemAdd">
