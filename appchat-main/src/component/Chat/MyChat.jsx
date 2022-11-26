@@ -32,14 +32,18 @@ import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 import { io } from "socket.io-client";
 import { AuthContext } from "../../contexts/AuthContext";
 //import 'bootstrap/dist/css/bootstrap.css';
-
+import isEmail from "validator/lib/isEmail"
 import Popup from "./Popup";
+import ModalInfoUser from "./ModalInfo/ModalInfoUser";
 
 
 //Avarta
 import PopupAvartar from "./Avarta/Popup";
-import FileInput from "./Avarta/FileInput";
 import styles from "./Avarta/styles.module.css";
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+
+
+
 
 
 // send image
@@ -49,7 +53,7 @@ import { v4 } from "uuid";
 import { async } from "@firebase/util";
 
 export default function MyChat() {
-  const { authState: { user: { avt, _id, username } } ,socket} = useContext(AuthContext)
+  const { authState: { user: { avt, _id, username } }, socket } = useContext(AuthContext)
 
   const [conversations, setConversation] = useState([]);
   const [currentChat, setCurrentChat] = useState(null);
@@ -86,10 +90,15 @@ export default function MyChat() {
     mes: '',
     isLoading: false
   })
-
+  const [popupInfo, setPopupInfo] = useState({
+    username: '',
+    message: '',
+    isLoading: false,
+   
+  })
 
   const [recallStatus, setRecallStatus] = useState(null)
-  
+
 
   const [openPopup, setOpenPopup] = useState(false);
   const [openPopup2, setOpenPopup2] = useState(false);
@@ -106,20 +115,21 @@ export default function MyChat() {
     img: ""
   });
 
+  const [emailCheck, setEmailCheck] = useState('')
+
   const handleChange = ({ currentTarget: input }) => {
     setData({ ...data, [input.name]: input.value });
   };
 
-  const handleInputState = (name, value) => {
-    setData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const url = "http://13.212.6.208:8800/api/conversations/updateImg/" + currentChat?._id;
+      const url = "http://18.142.139.131:8800/api/conversations/updateImg/" + currentChat?._id;
       const { data: res } = await axios.put(url, data);
       console.log(res)
+
+      setCurrentChat({ ...currentChat, img: (data.img),name:(data.name  ) })
 
     } catch (error) {
       console.log(error)
@@ -132,7 +142,57 @@ export default function MyChat() {
   });
 
 
+  //Update Image Anh nhom
+  const handleEditAvtNhom = (e) => {
 
+    const imageRef = ref(storage, `/avartaNhom/${e.target.files[0].name + v4()}`);
+    uploadBytes(imageRef, e.target.files[0])
+      .then(() => {
+        getDownloadURL(imageRef)
+          .then(async (url) => {
+
+
+            setData({ ...data, img: (url) })
+
+
+          })
+          .catch((error) => {
+            console.log(error.message, "error getting the image url");
+          });
+
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+
+
+
+  };
+
+  function handlePopupInfo(choose) {
+    if (!choose) {
+      setPopupInfo({
+        title: '',
+        username: "",
+        avt: "",
+        birthday: '',
+        gender: '',
+        email: '',
+        isLoading: false
+      });
+    }
+  }
+function ShowInfo(username , email,birthday, gender,avt){
+  setPopupInfo({
+    title: 'Thông tin tài khoản',
+    username: username,
+    avt: avt,
+    birthday: birthday,
+    gender: gender,
+    email: email,
+    isLoading: true
+  });
+}
 
   //send image
   const handleImageChange = (e) => {
@@ -149,8 +209,9 @@ export default function MyChat() {
     };
 
 
-
-    const imageRef = ref(storage, `/image/${e.target.files[0].name + v4()}`);
+    const filed = e.target.files[0].name.slice(e.target.files[0].name.lastIndexOf('.') + 1,e.target.files[0].name.length);
+    const fileName = e.target.files[0].name.slice(0, e.target.files[0].name.lastIndexOf('.')) + "-" + v4()+"."+filed;
+    const imageRef = ref(storage, `/image/${fileName}`);
     uploadBytes(imageRef, e.target.files[0])
       .then(() => {
         getDownloadURL(imageRef)
@@ -170,11 +231,15 @@ export default function MyChat() {
               }
             }
             try {
-              const res = await axios.post("http://13.212.6.208:8800//api/messages", messageimage);
+              const res = await axios.post("http://18.142.139.131:8800/api/messages", messageimage);
+              const timeUpdate= {
+                "convId" : currentChat._id,
+              }
+              const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
               //setMessages([...messages, res.data]);
               socket.current.emit("sendMessage", {
-                _id:res.data._id,
-                senderId:_id,
+                _id: res.data._id,
+                senderId: _id,
                 receiverIds,
                 type: 1,
                 text: messageimage.text,
@@ -185,7 +250,7 @@ export default function MyChat() {
                 username: username,
                 avt: avt,
               });
-  
+
               socket.current.emit("sendStatus", {
                 senderId: _id,
                 username: username,
@@ -195,7 +260,7 @@ export default function MyChat() {
                 conversationId: currentChat._id,
                 delUser: "",
                 date: Date.now(),
-    
+
               });
 
             } catch (err) {
@@ -216,12 +281,12 @@ export default function MyChat() {
   };
 
 
-   // send all file
-   const handleFileChange = async (e) => {
+  // send all file
+  const handleFileChange = async (e) => {
     const messageFile = {
       sender: _id,
       text: '',
-      type: e.target.files[0].type.match('video.*')? 2:3,
+      type: e.target.files[0].type.match('image.*')? 1:e.target.files[0].type.match('video.*')?2:3,
       conversationId: currentChat._id,
       reCall: false,
       delUser: "",
@@ -230,17 +295,18 @@ export default function MyChat() {
       avt: avt,
     };
 
-     // Max= 1 GB
-    const maxAllowedSize = 1 * 1024 * 1024 *1024;
+    // Max= 1 GB
+    const maxAllowedSize = 1 * 1024 * 1024 * 1024;
     if (e.target.files[0].size > maxAllowedSize) {
-      
+
       alert("Kích thước file vượt quá 1 GB");
-       return false;
+      return false;
     }
     
-    console.log(e.target.files[0].type)
+    const filed = e.target.files[0].name.slice(e.target.files[0].name.lastIndexOf('.') + 1,e.target.files[0].name.length);
+    const fileName = e.target.files[0].name.slice(0, e.target.files[0].name.lastIndexOf('.')) + "-" + v4()+"."+filed;
     
-     const upload = ref(storage, e.target.files[0].type.match('video.*') ? `/video/${e.target.files[0].name + v4()}`:`/file/${e.target.files[0].name + v4()}`);
+     const upload = ref(storage, e.target.files[0].type.match('video.*') ? `/video/${fileName}`:`/file/${fileName}`);
    
     uploadBytes(upload, e.target.files[0])
       .then(() => {
@@ -260,13 +326,17 @@ export default function MyChat() {
             }
 
             try {
-              const res = await axios.post("http://13.212.6.208:8800/api/messages", messageFile);
+              const res = await axios.post("http://18.142.139.131:8800/api/messages", messageFile);
+              const timeUpdate= {
+                "convId" : currentChat._id,
+              }
+              const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
               // setMessages([...messages, res.data]);
               socket.current.emit("sendMessage", {
-                _id:res.data._id,
+                _id: res.data._id,
                 senderId: _id,
                 receiverIds,
-                type: e.target.files[0].type.match('video.*')? 2:3,
+                type: e.target.files[0].type.match('image.*')? 1:e.target.files[0].type.match('video.*')?2:3,
                 text: messageFile.text,
                 conversationId: currentChat._id,
                 reCall: false,
@@ -275,17 +345,17 @@ export default function MyChat() {
                 username: username,
                 avt: avt,
               });
-  
+
               socket.current.emit("sendStatus", {
                 senderId: _id,
                 username: username,
                 receiverIds: currentChat.members,
-                type: e.target.files[0].type.match('video.*')? 2:3,
+                type: e.target.files[0].type.match('image.*')? 1:e.target.files[0].type.match('video.*')?2:3,
                 text: messageFile.text,
                 conversationId: currentChat._id,
                 delUser: "",
                 date: Date.now(),
-  
+
               })
 
             } catch (err) {
@@ -325,7 +395,7 @@ export default function MyChat() {
   function SetAuth(conId, userId) {
 
     const article = { conId, userId };
-    const con = axios.put('http://13.212.6.208:8800/api/conversations/setAuthorize', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/setAuthorize', article)
     con.then(value => {
       setAuthorize(value.data)
     })
@@ -334,7 +404,7 @@ export default function MyChat() {
 
   function RemoveAuth(conId, userId) {
     const article = { conId, userId };
-    const con = axios.put('http://13.212.6.208:8800/api/conversations/removeAuthorize', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/removeAuthorize', article)
     con.then(value => {
       setAuthorize(value.data)
     })
@@ -345,12 +415,12 @@ export default function MyChat() {
   function RemoveUserCon(conId, userId) {
 
     const article = { conId, userId };
-    const con = axios.put('http://13.212.6.208:8800/api/conversations/removeMember', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/removeMember', article)
 
     con.then(async value => {
       let list = [];
       for (let index = 0; index < value.data.length; index++) {
-        const res = await axios.get("http://13.212.6.208:8800/api/users?userId=" + value.data[index]);
+        const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + value.data[index]);
         list.push(res.data)
       }
       setUserCons(list);
@@ -362,18 +432,18 @@ export default function MyChat() {
 
   function AddUserCon(conId) {
     let userId =
-    listUserGroupAdd.map((userGr) => {
+      listUserGroupAdd.map((userGr) => {
         return userGr._id
       })
 
     const article = { conId, userId };
 
-    const con = axios.put('http://13.212.6.208:8800/api/conversations/addMember', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/addMember', article)
 
     con.then(async value => {
       let list = [];
       for (let index = 0; index < value.data.length; index++) {
-        const res = await axios.get("http://13.212.6.208:8800/api/users?userId=" + value.data[index]);
+        const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + value.data[index]);
         list.push(res.data)
       }
       setUserCons(list);
@@ -391,10 +461,10 @@ export default function MyChat() {
   async function disbandGroupSure(choose) {
     if (choose) {
       try {
-        const con = await axios.delete('http://13.212.6.208:8800/api/conversations/deleteCon', {
+        const con = await axios.delete('http://18.142.139.131:8800/api/conversations/deleteCon', {
           data: { convId: currentChat._id }
         })
-        // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+        // const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         // setConversation(res.data);
         Demo()
         setCurrentChat(null)
@@ -448,8 +518,8 @@ export default function MyChat() {
             conId: currentChat._id,
             userId: _id
           };
-          const con = axios.put('http://13.212.6.208:8800/api/conversations/removeMember', article)
-          // const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+          const con = axios.put('http://18.142.139.131:8800/api/conversations/removeMember', article)
+          // const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
           // setConversation(res.data);
           Demo()
           setCurrentChat(null)
@@ -507,13 +577,13 @@ export default function MyChat() {
     else {
       const args = { senderId, receiverId }
       try {
-        const res = await axios.post("http://13.212.6.208:8800/api/conversations", args);
+        const res = await axios.post("http://18.142.139.131:8800/api/conversations", args);
 
-        //const con = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+        //const con = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         //setConversation(con.data);
         setCurrentChat(res.data);
         setAuthorize(res.data.authorization)
-        setConActive(conversations.length)
+        setConActive(0)
       } catch (err) {
         console.log(err)
       }
@@ -533,13 +603,11 @@ export default function MyChat() {
   //   (member) => member !== user._id
   // );
   // console.log(receiverId);
-
-
   useEffect(() => {
-    socket.current = io("ws://13.212.6.208:8800");
+    socket.current = io("ws://18.142.139.131:8800");
     socket.current.on("getMessage", (data) => {
       setArrivalMessages({
-        _id:data._id,
+        _id: data._id,
         sender: data.senderId,
         text: data.text,
         type: data.type,
@@ -551,19 +619,23 @@ export default function MyChat() {
         avt: data.avt
       });
 
-       //load conversation latest
-       conversations.find((conv) => {
+      //load conversation latest
+      conversations.find((conv) => {
 
-        if(conv._id === data.conversationId){
+        if (conv._id === data.conversationId) {
           conv.updatedAt = new Date(Date.now()).toISOString();
-          for(let index=0; index<conv.members.length; index++){
-            if(conv.members[index] === _id){
-              conversations.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))
-                setConversation(conversations);
-            }              
+          for (let index = 0; index < conv.members.length; index++) {
+            if (conv.members[index] === _id) {
+              const concsts = conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+              setConversation(concsts);
+              concsts.forEach((con, index) => {
+                if (con === currentChat)
+                  setConActive(index)
+              })
+            }
           }
         }
-    })
+      })
 
     });
     socket.current.on("getStatus", (data) => {
@@ -594,11 +666,11 @@ export default function MyChat() {
   }, [currentChat]);
 
 
-  const ktt=(messages)=>{
-    if(messages.length==0) 
+  const ktt = (messages) => {
+    if (messages.length == 0)
       return true;
     else
-      if(messages[messages.length-1]._id != arrivalMessage._id)
+      if (messages[messages.length - 1]._id != arrivalMessage._id)
         return true;
       else return false;
   }
@@ -615,13 +687,13 @@ export default function MyChat() {
     socket.current.on("getUsers", (users) => {
       // console.log(users)
     })
-    let data={
-      usersId:_id,
-      isActive:true,
+    let data = {
+      usersId: _id,
+      isActive: true,
     }
     const activeOn = async () => {
       try {
-        const res = await axios.put('http://13.212.6.208:8800/api/users/'+_id, data);
+        const res = await axios.put('http://18.142.139.131:8800/api/users/' + _id, data);
         console.log(res.data);
       } catch (err) {
         console.log(err);
@@ -633,15 +705,15 @@ export default function MyChat() {
   useEffect(() => {
     const getMyFriend = async () => {
       try {
-        const res = await axios.get("http://13.212.6.208:8800/api/conversations/findById/" + currentChat?._id);
+        const res = await axios.get("http://18.142.139.131:8800/api/conversations/findById/" + currentChat?._id);
         const friendId = res.data.find((m) => m !== _id);
         //console.log(friendId)
-        const friend = await axios.get("http://13.212.6.208:8800/api/users?userId=" + friendId);
+        const friend = await axios.get("http://18.142.139.131:8800/api/users?userId=" + friendId);
         //console.log(friend);
         setMyFriend(friend.data);
         // const friendId = res.data.find((m) => m !== _id);
         // console.log(friendId)
-        // const friend = await axios.get("http://13.212.6.208:8800/api/users?userId="+friendId);  
+        // const friend = await axios.get("http://18.142.139.131:8800/api/users?userId="+friendId);  
         // console.log(friend);
         // setMyFriend(friend.data);
       } catch (err) {
@@ -655,7 +727,7 @@ export default function MyChat() {
     const getMessages = async () => {
       let messageList = [];
       try {
-        const res = await axios.get("http://13.212.6.208:8800/api/messages/" + currentChat?._id);
+        const res = await axios.get("http://18.142.139.131:8800/api/messages/" + currentChat?._id);
 
         for (let i = 0; i < res.data.length; i++) {
           if (res.data[i].delUser[0] !== _id) {
@@ -686,7 +758,7 @@ export default function MyChat() {
   useEffect(() => {
     const getConversations = async () => {
       try {
-        const res = await axios.get("http://13.212.6.208:8800/api/conversations/" + _id);
+        const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         setConversation(res.data);
       } catch (err) {
         console.log(err);
@@ -726,20 +798,20 @@ export default function MyChat() {
       }
 
 
+
+
       
 
-
-      const timeUpdate= {
-        "convId" : currentChat._id,
-      }
-
       try {
-        const res = await axios.post("http://13.212.6.208:8800/api/messages", message);
-        const updateTime = await axios.put("http://13.212.6.208:8800/api/conversations/updateAt", timeUpdate);
+        const res = await axios.post("http://18.142.139.131:8800/api/messages", message);
+        const timeUpdate= {
+          "convId" : currentChat._id,
+        }
+        const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
         // setMessages([...messages, res.data]);
         setNewMessages("");
         socket.current.emit("sendMessage", {
-          _id:res.data._id,
+          _id: res.data._id,
           senderId: _id,
           receiverIds,
           type: 0,
@@ -751,7 +823,7 @@ export default function MyChat() {
           username: username,
           avt: avt,
         });
-  
+
         socket.current.emit("sendStatus", {
           senderId: _id,
           username: username,
@@ -761,7 +833,7 @@ export default function MyChat() {
           conversationId: currentChat._id,
           delUser: "",
           date: Date.now(),
-  
+
         })
 
       } catch (err) {
@@ -790,7 +862,7 @@ export default function MyChat() {
 
     //gửi tin nhắn thu hồi
     socket.current.emit("deleteMessage", {
-      id:Math.random(),
+      id: Math.random(),
       messagesCurrent: messages,
       messageId: id,
       senderId: _id,
@@ -866,7 +938,7 @@ export default function MyChat() {
       let list = [];
       for (let index = 0; index < currentChat?.members.length; index++) {
         try {
-          const res = await axios.get("http://13.212.6.208:8800/api/users?userId=" + currentChat?.members[index]);
+          const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + currentChat?.members[index]);
           list.push(res.data)
         } catch (err) {
           console.log(err);
@@ -881,10 +953,21 @@ export default function MyChat() {
   async function handleTextSearchUser(e) {
     if (e.keyCode == 13) {
       return false;
-    }
+    }    
     let textSearch = document.querySelector('#search-user').value
+    setEmailCheck(textSearch)
+    setUserSearchCon(null)
     try {
-      const res = await axios.get("http://13.212.6.208:8800/api/users/userByMailOrName?email=" + textSearch);
+      var url = "";
+      if (!isEmail(emailCheck)){
+        //alert('?')
+        url = "http://18.142.139.131:8800/api/users/userByMailOrName?username="+ textSearch;
+      }
+      else{
+        url = "http://18.142.139.131:8800/api/users/userByMailOrName?email="+ textSearch;
+      }
+      const res = await axios.get(url);
+      
 
       setUserSearchCon(res.data)
     } catch (err) {
@@ -898,26 +981,26 @@ export default function MyChat() {
     }
     let textSearch = document.querySelector('#search-group').value
     try {
-      const res = await axios.get("http://13.212.6.208:8800/api/users/userByMailOrName?email=" + textSearch);
+      const res = await axios.get("http://18.142.139.131:8800/api/users/userByMailOrName?email=" + textSearch);
 
       setUserSearch(res.data)
     } catch (err) {
       setUserSearch(null)
     }
   }
-  function checkAddUserNewGroup(){
-    return listUserGroupNew.some((userN)=>
+  function checkAddUserNewGroup() {
+    return listUserGroupNew.some((userN) =>
       userN._id == userSearch._id
     )
   }
 
 
- function checkIfUserExistInConv() {
+  function checkIfUserExistInConv() {
     try {
-      const res =  axios.get("http://13.212.6.208:8800/api/conversations/findConvByUserID/"+ currentChat?._id+"/"+userSearchAddNew?._id);
-      
+      const res = axios.get("http://18.142.139.131:8800/api/conversations/findConvByUserID/" + currentChat?._id + "/" + userSearchAddNew?._id);
+
       console.log(res.data)
-     
+
       //setUserSearchAddCheckExist(res.data)
       //return res.data;
       res.then(value => {
@@ -935,7 +1018,7 @@ export default function MyChat() {
     }
     let textSearch = document.querySelector('#search-group2').value
     try {
-      const res = await axios.get("http://13.212.6.208:8800/api/users/userByMailOrName?email=" + textSearch);     
+      const res = await axios.get("http://18.142.139.131:8800/api/users/userByMailOrName?email=" + textSearch);
       setUserSearchAddNew(res.data)
     } catch (err) {
       setUserSearchAddNew(null)
@@ -962,20 +1045,20 @@ export default function MyChat() {
     e.preventDefault()
     //checkIfUserExistInConv()
     let check = checkAddUserNewGroup2()
-    if(check){
+    if (check) {
       setUserSearchAddNew(null)
       document.querySelector('#search-group2').value = ""
     }
-    else{
-      setlistUserGroupAdd([...listUserGroupAdd,userSearchAddNew])
+    else {
+      setlistUserGroupAdd([...listUserGroupAdd, userSearchAddNew])
       setUserSearchAddNew(null)
       document.querySelector('#search-group2').value = ""
       setUserSearchAddCheckExist(null)
     }
   }
 
-  function checkAddUserNewGroup2(){
-    return listUserGroupAdd.some((userN)=>
+  function checkAddUserNewGroup2() {
+    return listUserGroupAdd.some((userN) =>
       userN._id == userSearchAddNew._id
     )
   }
@@ -983,11 +1066,11 @@ export default function MyChat() {
   function clickButtonAdd(e) {
     e.preventDefault()
     let check = checkAddUserNewGroup()
-    if(check){
+    if (check) {
       setUserSearch(null)
       document.querySelector('#search-group').value = ""
     }
-    else{
+    else {
       setListUserGroupNew([...listUserGroupNew, userSearch])
       setUserSearch(null)
       document.querySelector('#search-group').value = ""
@@ -1036,10 +1119,10 @@ export default function MyChat() {
       img: 'https://cdn-icons-png.flaticon.com/512/1057/1057089.png?w=360'
     })
     try {
-      const res = await axios.post("http://13.212.6.208:8800/api/conversations/newConvGroup", conv);
+      const res = await axios.post("http://18.142.139.131:8800/api/conversations/newConvGroup", conv);
       setCurrentChat(res.data);
       setAuthorize(res.data.authorization)
-      setConActive(conversations.length)
+      setConActive(0)
     } catch (err) {
       console.log(err.message);
     }
@@ -1078,13 +1161,13 @@ export default function MyChat() {
             <input type="text" placeholder="Tìm kiếm" id="search-user" onKeyUp={handleTextSearchUser} />
             <div className="model-usersearch">
               {userSearchCon ? (userSearchCon._id == _id ?
-                <div className="nullUser">Đây là email của bạn</div> :
+                <div className="nullUser">Đây là bạn</div> :
                 <div className="item" onClick={() => {
                   handleChatOne(_id, userSearchCon._id)
                 }}>
                   <Avatar src={userSearchCon.avt}></Avatar>
                   <p>{userSearchCon.username}</p>
-                </div>) : <div className="nullUser">Không tìm thấy tài khoản</div>}
+                </div>) : <div className="nullUser">Không tìm thấy người dùng này</div>}
 
             </div>
           </div>
@@ -1108,7 +1191,7 @@ export default function MyChat() {
               }}>
 
                 <Conversation conversation={c} currentUser={_id} timeM={arrivalMessage} myMes={senderMessage}
-                  recall={recallStatus} active={conActive == index ? true : false} conv ={conversations} />
+                  recall={recallStatus} active={conActive == index ? true : false} conv = {conversations}/>
 
 
               </div>
@@ -1133,7 +1216,7 @@ export default function MyChat() {
                 </div>
                 <div>
                   <div className="user-fet">
-                 
+
                     <Tooltip
                       title="Tìm kiếm tin nhắn"
                       placement="bottom-end">
@@ -1219,7 +1302,9 @@ export default function MyChat() {
                   </span>
                 </Tooltip>
               </div>
-            </> : <span className="noChat">Chưa có tin nhắn</span>
+            </> : <div className="noChat">
+              <div className="header-name">Chào mừng bạn đến với CynoChat</div>
+            </div>
         }
       </div>
       <div className="morInfo_con">
@@ -1246,12 +1331,12 @@ export default function MyChat() {
 
             </div>
             <div>
-            {currentChat?.authorization.length > 0 ?
-            <div className="edit_button">
-              <IconButton onClick={() => { setOpenPopup2(true); }}><GroupAddIcon /></IconButton>
-              <p className="title_edit_button">Thêm thành viên</p>
-            </div>      
-                  : <div></div>}
+              {currentChat?.authorization.length > 0 ?
+                <div className="edit_button">
+                  <IconButton onClick={() => { setOpenPopup2(true); }}><GroupAddIcon /></IconButton>
+                  <p className="title_edit_button">Thêm thành viên</p>
+                </div>
+                : <div></div>}
             </div>
             {/* <div className="edit_button">
                 <IconButton>
@@ -1260,7 +1345,7 @@ export default function MyChat() {
                 <p className="title_edit_button">Tạo nhóm trò chuyện</p>
               </div> */}
           </div>
-          {currentChat?.authorization.length > 0 ?
+          {/* {currentChat?.authorization.length > 0 ? */}
             <div className="user_con">
               <div className="iv_title">
                 <p>Thành viên</p>
@@ -1269,7 +1354,10 @@ export default function MyChat() {
               <div className="iv_main">
                 <ul className="list-user">
                   {userCons.map((user) => (
-                    <li>
+                    <li onClick={() =>
+                      user._id === _id ?  false :
+                      ShowInfo(user.username , user.email,user.birthday, user.gender,user.avt) 
+                     }>
                       <div className="avt"><img src={user.avt ? user.avt : ""} /></div>
 
 
@@ -1293,7 +1381,9 @@ export default function MyChat() {
                               {authorize.map((auth1) => (
                                 auth1 === user._id ?
                                   <div className="item"
-                                    onClick={() => RemoveAuth(currentChat._id, user._id)}>Gỡ quyền quản trị viên</div>
+                                    onClick={(e) =>{
+                                      e.stopPropagation()
+                                       RemoveAuth(currentChat._id, user._id)}}>Gỡ quyền quản trị viên</div>
                                   :
                                   <div></div>
                               ))}
@@ -1304,16 +1394,20 @@ export default function MyChat() {
                                 authorize.some((auth1) => (
                                   auth1 === user._id
                                 )) ? <div></div> : <div className="item"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation()
                                     SetAuth(currentChat._id, user._id)
                                   }}>Chỉ định quản trị viên</div>
 
                               }
-                              <div className="item" onClick={() => {
+                              <div className="item" onClick={(e) => {
+                                e.stopPropagation()
                                 RemoveUserCon(currentChat._id, user._id)
 
                               }}
                               >Xóa khỏi nhóm</div>
+
+                        
 
                             </div>
                           </div>
@@ -1331,7 +1425,8 @@ export default function MyChat() {
 
                 </ul>
               </div>
-            </div> : <div></div>}
+            </div> : <div></div>
+            {/* } */}
           <div className="image_video_con">
             <div className="iv_title">
               <p>Ảnh/Video</p>
@@ -1416,16 +1511,16 @@ export default function MyChat() {
           </div>
 
           <div className="input-group">
-            <input className="form-control rounded ip-addGr" type="text" onKeyUp={handleTextSearch} id="search-group" placeholder="Tìm kiếm bằng email" />
-            <div className="model-search">
+            <input className="form-control rounded ip-addGr search" type="text" onKeyUp={handleTextSearch} id="search-group" placeholder="Nhập email để tìm kiếm" />
+            <div className="model-search group">
               {userSearch ?
                 <div className="item">
                   <Avatar src={userSearch.avt}></Avatar>
                   <p>{userSearch.username}</p>
-                  {userSearch._id === _id ? <div className="add">bạn</div> : 
-                  
-                 
-                  <button onClick={clickButtonAdd} className="add">Thêm</button>
+                  {userSearch._id === _id ? <div className="add">bạn</div> :
+
+
+                    <button onClick={clickButtonAdd} className="add">Thêm</button>
 
                   }
                 </div> : <div className="nullUser">Không thấy user</div>}
@@ -1433,8 +1528,8 @@ export default function MyChat() {
             </div>
           </div>
 
-          <div><p>____________________________________________________________________________</p></div>
-          <p className="title-Add">Danh sách cần thêm</p>
+          <div className="line-form"></div>
+          <p className="title-Add">Đã chọn</p>
           <ul className="listAdd">
             {listUserGroupNew.map((user_gr) => (
               <li className="itemAdd">
@@ -1491,11 +1586,11 @@ export default function MyChat() {
       >
         <form>
           <div className="input-group">
-            <input className="form-control rounded ip-addGr" type="text" 
+            <input className="form-control rounded ip-addGr search" type="text" 
             onKeyUp={handleTextSearch2}
-            id="search-group2" placeholder="Tìm kiếm bằng email" /> 
+            id="search-group2" placeholder="Nhập email để tìm kiếm" /> 
                 
-            <div className="model-search">
+            <div className="model-search group">
               {userSearchAddNew?
                 <div className="item">
                   <Avatar src={userSearchAddNew.avt}></Avatar>
@@ -1505,21 +1600,20 @@ export default function MyChat() {
                   //userSearchAddNew._id === userSearchAddCheckExist._id? <div className="add">Người này đã trong nhóm</div> :
                   } */}
                   {userSearchAddNew._id === _id ? <div className="add">bạn</div> :
-                  
-                  currentChat.members.some((auth1) => (
-                    auth1 === userSearchAddNew._id
-                  )) ?  
-                  <div className="add">Đã là thành viên</div> : 
-                  <button onClick={clickButtonAdd2} className="add">Thêm</button>
+
+                    currentChat.members.some((auth1) => (
+                      auth1 === userSearchAddNew._id
+                    )) ?
+                      <div className="add">Đã là thành viên</div> :
+                      <button onClick={clickButtonAdd2} className="add">Thêm</button>
 
                   }
                 </div> : <div className="nullUser">Không thấy user</div>}
 
             </div>
           </div>
-
-          <div><p>____________________________________________________________________________</p></div>
-          <p className="title-Add">Danh sách cần thêm</p>
+          <div className="line-form"></div>
+          <p className="title-Add">Đã chọn</p>
           <ul className="listAdd">
             {listUserGroupAdd.map((user_gr) => (
               <li className="itemAdd">
@@ -1562,44 +1656,57 @@ export default function MyChat() {
 
 
       <PopupAvartar
-        title="Thông tin nhóm"
+        title="Cập nhật thông tin nhóm"
         openPopup={openPopupAvarta}
         setOpenPopup={setOpenPopupAvarta}>
 
-        <h1 >{currentChat?.name}</h1>
+       
 
-        <div className={styles.container}>
-          <form className={styles.form} onSubmit={handleSubmit} >
+        <div className="avtEditNhom">
+          <Avatar src={data.img}
+            sx={{ width: 70, height: 70 }}>
+          </Avatar>
 
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="Ten nhom"
-              name="name"
-              onChange={handleChange}
-              value={data.name}
-            />
+          {/* Choose image avtar */}
+          <label for="myAnhNhom"><AddAPhotoIcon /></label>
+          <input type="file" accept="image/png, image/jpeg" id="myAnhNhom" name="myAnhNhom" style={{ display: 'none' }} onChange={handleEditAvtNhom} />
 
-            <FileInput
-              name="img"
-              label="Choose Image"
-              handleInputState={handleInputState}
-              type="image"
-              value={data.img}
-            />
-
-            <button type="submit" className={styles.submit_btn} onClick={() => {
-              setOpenPopupAvarta(false);
-              //window.location.reload(false)
-            }}>
-              Submit
-            </button>
-          </form>
         </div>
+        {/* <h2 className={styles.titlename}>{currentChat?.name}</h2> */}
+        <br></br>
+        <label >Tên nhóm</label>
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="Ten nhom"
+          name="name"
+          onChange={handleChange}
+          value={data.name}
+        />
+        <form onSubmit={handleSubmit}>
+          <button type="submit" class={styles.submit_btn} onClick={(e) => {
+            setOpenPopupAvarta(false);
+            
+          }}>
+            Cập nhật
+          </button>
+        </form>
+
+
       </PopupAvartar>
       {popupQuestion.isLoading && <PopupQuestion onDialog={disbandGroupSure} title={popupQuestion.title} mes={popupQuestion.mes} />}
       {popupQuestionOutGroup.isLoading && <PopupQuestionOutGroup onDialog={outGroupSure} title={popupQuestionOutGroup.title} mes={popupQuestionOutGroup.mes} />}
       {popupNotify.isLoading && <PopupNotify onDialog={handleNotify} title={popupNotify.title} mes={popupNotify.mes} />}
+      {popupInfo.isLoading && <ModalInfoUser onDialog={handlePopupInfo}
+        avt={popupInfo.avt}
+        gender={popupInfo.gender}
+        birthday={popupInfo.birthday}
+        email={popupInfo.email}
+        title={popupInfo.title}
+        username={popupInfo.username}
+        />}
+
+    
     </div>
   );
 }

@@ -97,6 +97,16 @@ export default function Login() {
                 setAlert({ type: 'danger', message: loginData.message })
                 setTimeout(() => setAlert(null), 5000)
             }
+            if (loginData.otpCheck) {
+                setAlertRe({ type: 'danger', message: "Đợi xác thực tài khoản" })
+                setTimeout(() => setAlertRe(null), 10000)
+                setPopupOTP({
+                    title: 'Nhập mã xác thực',
+                    gmail: email,
+                    isLoading: true
+                  });
+            }
+
         } catch (error) {
             console.log(error)
         }
@@ -125,15 +135,24 @@ export default function Login() {
 
     const register = async event => {
         event.preventDefault()
-
-        if(passwordRe === cfpassword){
+        const currentYear = new Date().getFullYear()
+        const bd = new Date(birthday)
+        if(!birthday){
+            setAlertRe({ type: 'danger', message: "Chưa chọn ngày sinh" })
+            setTimeout(() => setAlertRe(null), 5000)
+        }
+        else if(currentYear - bd.getFullYear() < 16){
+            setAlertRe({ type: 'danger', message: "Chỉ cho phép người dùng trên 16 tuổi" })
+            setTimeout(() => setAlertRe(null), 5000)
+        }
+        else if(passwordRe === cfpassword){
             try {
                 const registerData = await registerUser(registerForm)
                 if (!registerData.success) {
                     setAlertRe({ type: 'danger', message: registerData.message })
                     setTimeout(() => setAlertRe(null), 5000)
                 }else{
-                    setAlertRe({ type: 'danger', message: "Xác thực tài khoản" })
+                    setAlertRe({ type: 'danger', message: "Đợi xác thực tài khoản" })
                     setTimeout(() => setAlertRe(null), 10000)
 
                     setPopupOTP({
