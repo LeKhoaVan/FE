@@ -66,7 +66,7 @@ export default function MyChat() {
   const [arrivalMessage, setArrivalMessages] = useState(null);
   const [senderMessage, setSenderMessage] = useState(null);
   const [recallMessage, setRecallMessages] = useState(null);
-  const [deleteMessage, setDeleteMessages] = useState([]);
+  const [newM, setNewM] = useState();
   const [listUserGroupNew, setListUserGroupNew] = useState([]);
   const [listUserGroupAdd, setlistUserGroupAdd] = useState([]);
   const [userSearch, setUserSearch] = useState(null);
@@ -127,7 +127,7 @@ export default function MyChat() {
     try {
       const url = "http://18.142.139.131:8800/api/conversations/updateImg/" + currentChat?._id;
       const { data: res } = await axios.put(url, data);
-      console.log(res)
+     
 
       setCurrentChat({ ...currentChat, img: (data.img),name:(data.name  ) })
 
@@ -628,9 +628,10 @@ function ShowInfo(username , email,birthday, gender,avt){
             if (conv.members[index] === _id) {
               const concsts = conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
               setConversation(concsts);
+              
               concsts.forEach((con, index) => {
                 if (con === currentChat)
-                  setConActive(index)
+                  setConActive(index);
               })
             }
           }
@@ -679,7 +680,6 @@ function ShowInfo(username , email,birthday, gender,avt){
     arrivalMessage && currentChat?.members.includes(arrivalMessage.sender) &&
       currentChat?._id === arrivalMessage.conversationId && ktt(messages) &&
       setMessages((prev) => [...prev, arrivalMessage])
-    console.log(arrivalMessage)
   }, [arrivalMessage, currentChat])
 
   useEffect(() => {
@@ -694,7 +694,6 @@ function ShowInfo(username , email,birthday, gender,avt){
     const activeOn = async () => {
       try {
         const res = await axios.put('http://18.142.139.131:8800/api/users/' + _id, data);
-        console.log(res.data);
       } catch (err) {
         console.log(err);
       }
@@ -894,7 +893,7 @@ function ShowInfo(username , email,birthday, gender,avt){
   useEffect(() => {
 
     socket.current.on("delMgs", (data) => {
-      console.log(data.messageId)
+     
 
       setMessages(data.messagesCurrent)
 
@@ -999,7 +998,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     try {
       const res = axios.get("http://18.142.139.131:8800/api/conversations/findConvByUserID/" + currentChat?._id + "/" + userSearchAddNew?._id);
 
-      console.log(res.data)
+     
 
       //setUserSearchAddCheckExist(res.data)
       //return res.data;
@@ -1105,6 +1104,8 @@ function ShowInfo(username , email,birthday, gender,avt){
 
   const createNewConvGroup = async () => {
 
+    
+
     let listMemberId =
       listUserGroupNew.map((userGr) => {
         return userGr._id
@@ -1120,6 +1121,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     })
     try {
       const res = await axios.post("http://18.142.139.131:8800/api/conversations/newConvGroup", conv);
+
       setCurrentChat(res.data);
       setAuthorize(res.data.authorization)
       setConActive(0)
@@ -1191,7 +1193,7 @@ function ShowInfo(username , email,birthday, gender,avt){
               }}>
 
                 <Conversation conversation={c} currentUser={_id} timeM={arrivalMessage} myMes={senderMessage}
-                  recall={recallStatus} active={conActive == index ? true : false} conv = {conversations}/>
+                  recall={recallStatus} active={conActive == index ? true : false} />
 
 
               </div>
