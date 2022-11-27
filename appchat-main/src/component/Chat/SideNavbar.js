@@ -84,7 +84,7 @@ const updateProfile= async (data) =>{
   try {
     console.log(data)
     console.log(userProfile)
-    const url = "http://localhost:8800/api/users/updateProfile/" +_id;
+    const url = "http://18.142.139.131:8800/api/users/updateProfile/" +_id;
     const res = await axios.put(url, data);
     setProfile({ ...userProfile,username:data.username,avt:data.avt,gender:data.gender,birthday:data.birthday})
   } catch (error) {

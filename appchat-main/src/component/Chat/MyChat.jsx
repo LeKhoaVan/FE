@@ -125,7 +125,7 @@ export default function MyChat() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const url = "http://localhost:8800/api/conversations/updateImg/" + currentChat?._id;
+      const url = "http://18.142.139.131:8800/api/conversations/updateImg/" + currentChat?._id;
       const { data: res } = await axios.put(url, data);
       console.log(res)
 
@@ -231,11 +231,11 @@ function ShowInfo(username , email,birthday, gender,avt){
               }
             }
             try {
-              const res = await axios.post("http://localhost:8800/api/messages", messageimage);
+              const res = await axios.post("http://18.142.139.131:8800/api/messages", messageimage);
               const timeUpdate= {
                 "convId" : currentChat._id,
               }
-              const updateTime = await axios.put("http://localhost:8800/api/conversations/updateAt", timeUpdate);
+              const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
               //setMessages([...messages, res.data]);
               socket.current.emit("sendMessage", {
                 _id: res.data._id,
@@ -326,11 +326,11 @@ function ShowInfo(username , email,birthday, gender,avt){
             }
 
             try {
-              const res = await axios.post("http://localhost:8800/api/messages", messageFile);
+              const res = await axios.post("http://18.142.139.131:8800/api/messages", messageFile);
               const timeUpdate= {
                 "convId" : currentChat._id,
               }
-              const updateTime = await axios.put("http://localhost:8800/api/conversations/updateAt", timeUpdate);
+              const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
               // setMessages([...messages, res.data]);
               socket.current.emit("sendMessage", {
                 _id: res.data._id,
@@ -395,7 +395,7 @@ function ShowInfo(username , email,birthday, gender,avt){
   function SetAuth(conId, userId) {
 
     const article = { conId, userId };
-    const con = axios.put('http://localhost:8800/api/conversations/setAuthorize', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/setAuthorize', article)
     con.then(value => {
       setAuthorize(value.data)
     })
@@ -404,7 +404,7 @@ function ShowInfo(username , email,birthday, gender,avt){
 
   function RemoveAuth(conId, userId) {
     const article = { conId, userId };
-    const con = axios.put('http://localhost:8800/api/conversations/removeAuthorize', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/removeAuthorize', article)
     con.then(value => {
       setAuthorize(value.data)
     })
@@ -415,12 +415,12 @@ function ShowInfo(username , email,birthday, gender,avt){
   function RemoveUserCon(conId, userId) {
 
     const article = { conId, userId };
-    const con = axios.put('http://localhost:8800/api/conversations/removeMember', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/removeMember', article)
 
     con.then(async value => {
       let list = [];
       for (let index = 0; index < value.data.length; index++) {
-        const res = await axios.get("http://localhost:8800/api/users?userId=" + value.data[index]);
+        const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + value.data[index]);
         list.push(res.data)
       }
       setUserCons(list);
@@ -438,12 +438,12 @@ function ShowInfo(username , email,birthday, gender,avt){
 
     const article = { conId, userId };
 
-    const con = axios.put('http://localhost:8800/api/conversations/addMember', article)
+    const con = axios.put('http://18.142.139.131:8800/api/conversations/addMember', article)
 
     con.then(async value => {
       let list = [];
       for (let index = 0; index < value.data.length; index++) {
-        const res = await axios.get("http://localhost:8800/api/users?userId=" + value.data[index]);
+        const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + value.data[index]);
         list.push(res.data)
       }
       setUserCons(list);
@@ -461,10 +461,10 @@ function ShowInfo(username , email,birthday, gender,avt){
   async function disbandGroupSure(choose) {
     if (choose) {
       try {
-        const con = await axios.delete('http://localhost:8800/api/conversations/deleteCon', {
+        const con = await axios.delete('http://18.142.139.131:8800/api/conversations/deleteCon', {
           data: { convId: currentChat._id }
         })
-        // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
+        // const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         // setConversation(res.data);
         Demo()
         setCurrentChat(null)
@@ -518,8 +518,8 @@ function ShowInfo(username , email,birthday, gender,avt){
             conId: currentChat._id,
             userId: _id
           };
-          const con = axios.put('http://localhost:8800/api/conversations/removeMember', article)
-          // const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
+          const con = axios.put('http://18.142.139.131:8800/api/conversations/removeMember', article)
+          // const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
           // setConversation(res.data);
           Demo()
           setCurrentChat(null)
@@ -577,9 +577,9 @@ function ShowInfo(username , email,birthday, gender,avt){
     else {
       const args = { senderId, receiverId }
       try {
-        const res = await axios.post("http://localhost:8800/api/conversations", args);
+        const res = await axios.post("http://18.142.139.131:8800/api/conversations", args);
 
-        //const con = await axios.get("http://localhost:8800/api/conversations/" + _id);
+        //const con = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         //setConversation(con.data);
         setCurrentChat(res.data);
         setAuthorize(res.data.authorization)
@@ -693,7 +693,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     }
     const activeOn = async () => {
       try {
-        const res = await axios.put('http://localhost:8800/api/users/' + _id, data);
+        const res = await axios.put('http://18.142.139.131:8800/api/users/' + _id, data);
         console.log(res.data);
       } catch (err) {
         console.log(err);
@@ -705,15 +705,15 @@ function ShowInfo(username , email,birthday, gender,avt){
   useEffect(() => {
     const getMyFriend = async () => {
       try {
-        const res = await axios.get("http://localhost:8800/api/conversations/findById/" + currentChat?._id);
+        const res = await axios.get("http://18.142.139.131:8800/api/conversations/findById/" + currentChat?._id);
         const friendId = res.data.find((m) => m !== _id);
         //console.log(friendId)
-        const friend = await axios.get("http://localhost:8800/api/users?userId=" + friendId);
+        const friend = await axios.get("http://18.142.139.131:8800/api/users?userId=" + friendId);
         //console.log(friend);
         setMyFriend(friend.data);
         // const friendId = res.data.find((m) => m !== _id);
         // console.log(friendId)
-        // const friend = await axios.get("http://localhost:8800/api/users?userId="+friendId);  
+        // const friend = await axios.get("http://18.142.139.131:8800/api/users?userId="+friendId);  
         // console.log(friend);
         // setMyFriend(friend.data);
       } catch (err) {
@@ -727,7 +727,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     const getMessages = async () => {
       let messageList = [];
       try {
-        const res = await axios.get("http://localhost:8800/api/messages/" + currentChat?._id);
+        const res = await axios.get("http://18.142.139.131:8800/api/messages/" + currentChat?._id);
 
         for (let i = 0; i < res.data.length; i++) {
           if (res.data[i].delUser[0] !== _id) {
@@ -758,7 +758,7 @@ function ShowInfo(username , email,birthday, gender,avt){
   useEffect(() => {
     const getConversations = async () => {
       try {
-        const res = await axios.get("http://localhost:8800/api/conversations/" + _id);
+        const res = await axios.get("http://18.142.139.131:8800/api/conversations/" + _id);
         setConversation(res.data);
       } catch (err) {
         console.log(err);
@@ -803,11 +803,11 @@ function ShowInfo(username , email,birthday, gender,avt){
       
 
       try {
-        const res = await axios.post("http://localhost:8800/api/messages", message);
+        const res = await axios.post("http://18.142.139.131:8800/api/messages", message);
         const timeUpdate= {
           "convId" : currentChat._id,
         }
-        const updateTime = await axios.put("http://localhost:8800/api/conversations/updateAt", timeUpdate);
+        const updateTime = await axios.put("http://18.142.139.131:8800/api/conversations/updateAt", timeUpdate);
         // setMessages([...messages, res.data]);
         setNewMessages("");
         socket.current.emit("sendMessage", {
@@ -938,7 +938,7 @@ function ShowInfo(username , email,birthday, gender,avt){
       let list = [];
       for (let index = 0; index < currentChat?.members.length; index++) {
         try {
-          const res = await axios.get("http://localhost:8800/api/users?userId=" + currentChat?.members[index]);
+          const res = await axios.get("http://18.142.139.131:8800/api/users?userId=" + currentChat?.members[index]);
           list.push(res.data)
         } catch (err) {
           console.log(err);
@@ -961,10 +961,10 @@ function ShowInfo(username , email,birthday, gender,avt){
       var url = "";
       if (!isEmail(emailCheck)){
         //alert('?')
-        url = "http://localhost:8800/api/users/userByMailOrName?username="+ textSearch;
+        url = "http://18.142.139.131:8800/api/users/userByMailOrName?username="+ textSearch;
       }
       else{
-        url = "http://localhost:8800/api/users/userByMailOrName?email="+ textSearch;
+        url = "http://18.142.139.131:8800/api/users/userByMailOrName?email="+ textSearch;
       }
       const res = await axios.get(url);
       
@@ -981,7 +981,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     }
     let textSearch = document.querySelector('#search-group').value
     try {
-      const res = await axios.get("http://localhost:8800/api/users/userByMailOrName?email=" + textSearch);
+      const res = await axios.get("http://18.142.139.131:8800/api/users/userByMailOrName?email=" + textSearch);
 
       setUserSearch(res.data)
     } catch (err) {
@@ -997,7 +997,7 @@ function ShowInfo(username , email,birthday, gender,avt){
 
   function checkIfUserExistInConv() {
     try {
-      const res = axios.get("http://localhost:8800/api/conversations/findConvByUserID/" + currentChat?._id + "/" + userSearchAddNew?._id);
+      const res = axios.get("http://18.142.139.131:8800/api/conversations/findConvByUserID/" + currentChat?._id + "/" + userSearchAddNew?._id);
 
       console.log(res.data)
 
@@ -1018,7 +1018,7 @@ function ShowInfo(username , email,birthday, gender,avt){
     }
     let textSearch = document.querySelector('#search-group2').value
     try {
-      const res = await axios.get("http://localhost:8800/api/users/userByMailOrName?email=" + textSearch);
+      const res = await axios.get("http://18.142.139.131:8800/api/users/userByMailOrName?email=" + textSearch);
       setUserSearchAddNew(res.data)
     } catch (err) {
       setUserSearchAddNew(null)
@@ -1119,7 +1119,7 @@ function ShowInfo(username , email,birthday, gender,avt){
       img: 'https://cdn-icons-png.flaticon.com/512/1057/1057089.png?w=360'
     })
     try {
-      const res = await axios.post("http://localhost:8800/api/conversations/newConvGroup", conv);
+      const res = await axios.post("http://18.142.139.131:8800/api/conversations/newConvGroup", conv);
       setCurrentChat(res.data);
       setAuthorize(res.data.authorization)
       setConActive(0)
