@@ -8,7 +8,7 @@ import 'moment/locale/vi';
 
 
 
-export default function Conversation({ conversation, currentUser, timeM, myMes,recall , active}) {
+export default function Conversation({ conversation, currentUser, timeM, myMes,recall , active, conv}) {
   const [user, setUser] = useState([]);
   const [newMes, setNewMes] = useState([]);
   const [userName, setUserName] = useState([]);
@@ -18,7 +18,7 @@ export default function Conversation({ conversation, currentUser, timeM, myMes,r
     const friendId = conversation.members.find((m) => m !== currentUser);
     const getUser = async () => {
       try {
-        const res = await axios("http://18.142.139.131:8800/api/users?userId="+friendId);  
+        const res = await axios("http://localhost:8800/api/users?userId="+friendId);  
         setUser(res.data);
        
       } catch (err) {
@@ -26,14 +26,14 @@ export default function Conversation({ conversation, currentUser, timeM, myMes,r
       }
     };
     getUser();
-  }, [currentUser, conversation]);
+  }, [currentUser, conversation, conv]);
 
 
   useEffect(() => {
     const getNewMes = async () => {
-      //http://18.142.139.131:8800/api/messages/lastmess/63681efaf338cdd7632c04f1
+      //http://localhost:8800/api/messages/lastmess/63681efaf338cdd7632c04f1
       try {
-        const res = await axios("http://18.142.139.131:8800/api/messages/lastmess/"+conversation._id);
+        const res = await axios("http://localhost:8800/api/messages/lastmess/"+conversation._id);
         console.log(res.data.sender)
         // const newM = res.data;
         
@@ -57,12 +57,12 @@ export default function Conversation({ conversation, currentUser, timeM, myMes,r
       }
     };
     getNewMes();
-  }, [conversation]);
+  }, [conversation, conv]);
 
   useEffect(() => {
     const getUserName = async () => {
       try {
-        const res = await axios("http://18.142.139.131:8800/api/users?userId="+newMes.sender);  
+        const res = await axios("http://localhost:8800/api/users?userId="+newMes.sender);  
         setUserName(res.data.username);
         
       } catch (err) {
