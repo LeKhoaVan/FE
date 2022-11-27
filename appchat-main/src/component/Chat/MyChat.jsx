@@ -604,7 +604,7 @@ function ShowInfo(username , email,birthday, gender,avt){
   // );
   // console.log(receiverId);
   useEffect(() => {
-    socket.current = io("ws://localhost:8800");
+    socket.current = io("ws://18.142.139.131:8800");
     socket.current.on("getMessage", (data) => {
       setArrivalMessages({
         _id: data._id,
